@@ -1,69 +1,54 @@
 package com.company;
-import com.company.common.CategoryUtils;
 import com.company.common.ProductCategory;
-import com.company.common.StandardCategory;
-import com.company.conf.*;
-import com.company.ml.*;
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.SQLContext;
+import com.company.conf.AppConfigProperties;
+import com.company.conf.SparkConfigProperties;
+import com.company.ml.PredictProduct;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.io.*;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
-        // 加载词典
-        Map<Integer, StandardCategory> standardCategoryVoMap = new HashMap<>();
-        final TypeReference<List<StandardCategory>> categoryVoTypeReference = new TypeReference<List<StandardCategory>>() {
-        };
-        try (InputStream is = Main.class.getResourceAsStream("/category.json")) {
-            String jsonString = IOUtils.toString(is);
-            List<StandardCategory> voList = CategoryUtils.fromJson(jsonString, categoryVoTypeReference);
-            if (CollectionUtils.isEmpty(voList)) {
-                System.out.println("Cannot load category json file");
-                return;
-            }
-            voList.forEach(vo -> standardCategoryVoMap.put(vo.getThirdCateId(), vo));
-        } catch (IOException e) {
-           System.out.println("Cannot load category json file");
-        }
-        // 定义输入
+    public static void main(String[] args) {
         List<String> input = new LinkedList<>();
-        input.add("【买2送1】海棠花苗 腊梅树苗 梅花树盆景 樱花苗 紫藤苗 桂花树苗盆栽室内外绿植花卉观花庭院阳台 西府海棠 三年苗");
+        // 读取 CSV 文件
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("/Users/wgb/Code/e-business/product_category/data/Raw.csv"));
+            reader.readLine();
+            String line;
+            while((line=reader.readLine())!=null){
+                String[] item = line.split(",");
+                String last = item[item.length-1];
+                String rawString = last.substring(1,last.length()-1);
+                input.add(rawString);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         AppConfigProperties appConfigProperties = new AppConfigProperties();
         SparkConfigProperties sparkConfigProperties = new SparkConfigProperties();
-        System.out.println(sparkConfigProperties);
-        SparkConf sparkConf = new SparkConf().setAppName(sparkConfigProperties.getAppName())
-                .setMaster(sparkConfigProperties.getMasterUrl());
-        sparkConf.set("spark.cores.max","1");
-        sparkConf.set("spark.executor.memory","1g");
-        sparkConf.set("spark.driver.memory","512m");
-        sparkConf.set("spark.network.timeout","5000");
-        JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
-        SQLContext sqlContext = new SQLContext(javaSparkContext);
-//        Trainer trainer = new Trainer(javaSparkContext,sqlContext,appConfigProperties);
-//        trainer.trainWithTfIdf();
-        NlpTokenizer nlpTokenizer = new NlpTokenizer(appConfigProperties);
-        nlpTokenizer.init();
-        BayesClassification bayesClassification = new BayesClassification(appConfigProperties);
-        FeatureExtractor featureExtractor = new FeatureExtractor(appConfigProperties,javaSparkContext,sqlContext,nlpTokenizer);
-        featureExtractor.init();
-        CategoryModel categoryModel = new CategoryModel(featureExtractor,bayesClassification);
-        categoryModel.loadModel();
-        List<ProductCategory> temp = categoryModel.predict(input);
-        List<ProductCategory> res = temp.stream()
-                .peek(categoryVo -> {
-                    StandardCategory standardVo = standardCategoryVoMap.get(categoryVo.getThirdCateId());
-                    categoryVo.copyCategory(standardVo);
-                })
-                .collect(Collectors.toList());
-        System.out.println(res.get(0).getProductName());
-        System.out.println(res.get(0).getFirstCate());
+        PredictProduct predictProduct = new PredictProduct(appConfigProperties,sparkConfigProperties);
+        List<ProductCategory> res = predictProduct.predict(input);
+        // 写入CSV文件
+        try {
+            File csv = new File("/Users/wgb/Code/e-business/product_category/data/Result.csv"); // CSV数据文件
+
+            BufferedWriter bw = new BufferedWriter(new FileWriter(csv,true)); // 附加
+            for (int i = 0;i<res.size();i++){
+                bw.write(res.get(i).getProductName()+","+res.get(i).getFirstCate()+","+res.get(i).getSecondCate()+","+res.get(i).getThirdCate());
+                bw.newLine();
+                System.out.println(res.get(i).getProductName());
+                System.out.println(res.get(i).getFirstCate());
+                System.out.println(res.get(i).getSecondCate());
+                System.out.println(res.get(i).getThirdCate());
+            }
+            bw.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
     }
 }
