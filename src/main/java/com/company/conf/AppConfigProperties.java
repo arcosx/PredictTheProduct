@@ -20,6 +20,15 @@ public class AppConfigProperties {
      * 特征向量维度
      */
     private int numFeatures = 10000;
+    /**
+     * Spark Master 地址
+     */
+    private String masterUrl = "spark://arcosx.local:7077";
+
+    /**
+     * Spark应用名称
+     */
+    private String appName = "predictProduct";
 
     /**
      * 系统启动时，如果本地没有模型文件，是否启动训练

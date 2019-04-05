@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <spark.version>2.2.1</spark.version>
+        <spark.version>2.4.0</spark.version>
         <collections4.version>4.1</collections4.version>
         <lang3.version>3.4</lang3.version>
         <lombok.version>1.16.10</lombok.version>
@@ -78,13 +78,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <!--<additionalparam>-Xdoclint:none</additionalparam>-->
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

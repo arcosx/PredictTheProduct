@@ -13,9 +13,9 @@ public class ProductCategory extends StandardCategory {
         setThirdCateId((int) thirdCategoryId);
     }
 
-    public ProductCategory copyCategory(StandardCategory other) {
+    public void copyCategory(StandardCategory other) {
         if (null == other) {
-            return this;
+            return;
         }
 
         setFirstCate(other.getFirstCate());
@@ -25,6 +25,5 @@ public class ProductCategory extends StandardCategory {
         setThirdCate(other.getThirdCate());
         setThirdCateId(other.getThirdCateId());
 
-        return this;
     }
 }

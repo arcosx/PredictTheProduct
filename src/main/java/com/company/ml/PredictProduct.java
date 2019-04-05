@@ -5,13 +5,10 @@ import com.company.common.CategoryUtils;
 import com.company.common.ProductCategory;
 import com.company.common.StandardCategory;
 import com.company.conf.AppConfigProperties;
-import com.company.conf.SparkConfigProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 
 import java.io.IOException;
@@ -24,15 +21,15 @@ import java.util.stream.Collectors;
 public class PredictProduct {
 
     private Map<Integer, StandardCategory> standardCategoryVoMap = new HashMap<>();
-    private final TypeReference<List<StandardCategory>> categoryVoTypeReference = new TypeReference<List<StandardCategory>>() {
-    };
 
     private CategoryModel categoryModel;
 
-    public  PredictProduct(AppConfigProperties appConfigProperties, SparkConfigProperties sparkConfigProperties){
+    public  PredictProduct(AppConfigProperties appConfigProperties){
         try (InputStream is = Main.class.getResourceAsStream("/category.json")) {
             String jsonString = IOUtils.toString(is);
-            List<StandardCategory> voList = CategoryUtils.fromJson(jsonString, this.categoryVoTypeReference);
+            TypeReference<List<StandardCategory>> categoryVoTypeReference = new TypeReference<List<StandardCategory>>() {
+            };
+            List<StandardCategory> voList = CategoryUtils.fromJson(jsonString, categoryVoTypeReference);
             if (CollectionUtils.isEmpty(voList)) {
                 System.out.println("Cannot load category json file");
                 return;
@@ -41,20 +38,19 @@ public class PredictProduct {
         } catch (IOException e) {
             System.out.println("Cannot load category json file");
         }
-
-        SparkConf sparkConf = new SparkConf();
-        sparkConf.setAppName(sparkConfigProperties.getAppName());
-        sparkConf.setMaster(sparkConfigProperties.getMasterUrl());
-        sparkConf.set("spark.cores.max", "1");
-        sparkConf.set("spark.executor.memory", "1g");
-        sparkConf.set("spark.driver.memory", "512m");
-        sparkConf.set("spark.network.timeout", "5000");
-
-        JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
-        SQLContext sqlContext = new SQLContext(javaSparkContext);
+        SparkSession sparkSession = SparkSession
+                .builder()
+                .master(appConfigProperties.getMasterUrl())
+                .appName(appConfigProperties.getAppName())
+                .config("spark.cores.max",1)
+                .config("spark.executor.memory","1g")
+                .config("spark.driver.memory","512m")
+                .config("spark.network.timeout","5000")
+                .getOrCreate();
+        JavaSparkContext javaSparkContext = new JavaSparkContext(sparkSession.sparkContext());
         NlpTokenizer nlpTokenizer = new NlpTokenizer(appConfigProperties);
         BayesClassification bayesClassification = new BayesClassification(appConfigProperties);
-        FeatureExtractor featureExtractor = new FeatureExtractor(appConfigProperties, javaSparkContext, sqlContext, nlpTokenizer);
+        FeatureExtractor featureExtractor = new FeatureExtractor(appConfigProperties, sparkSession,javaSparkContext, nlpTokenizer);
         this.categoryModel = new CategoryModel(featureExtractor, bayesClassification);
         this.categoryModel.loadModel();
     }

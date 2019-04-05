@@ -1,7 +1,7 @@
 package com.company;
 import com.company.common.ProductCategory;
 import com.company.conf.AppConfigProperties;
-import com.company.conf.SparkConfigProperties;
+
 import com.company.ml.PredictProduct;
 
 import java.io.*;
@@ -26,8 +26,7 @@ public class Main {
             e.printStackTrace();
         }
         AppConfigProperties appConfigProperties = new AppConfigProperties();
-        SparkConfigProperties sparkConfigProperties = new SparkConfigProperties();
-        PredictProduct predictProduct = new PredictProduct(appConfigProperties,sparkConfigProperties);
+        PredictProduct predictProduct = new PredictProduct(appConfigProperties);
         List<ProductCategory> res = predictProduct.predict(input);
         // 写入CSV文件
         try {

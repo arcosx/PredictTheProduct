@@ -20,23 +20,15 @@ import java.util.List;
 
 @Slf4j
 public class FeatureExtractor {
-
-
     private AppConfigProperties appConfigProperties;
-
-
     private JavaSparkContext sparkContext;
-
-
-    private SQLContext sqlContext;
-
-
+    private SparkSession sparkSession;
     private NlpTokenizer nlpTokenizer;
 
-    public FeatureExtractor(AppConfigProperties appConfigProperties, JavaSparkContext sparkContext, SQLContext sqlContext, NlpTokenizer nlpTokenizer) {
+    public FeatureExtractor(AppConfigProperties appConfigProperties,SparkSession sparkSession, JavaSparkContext sparkContext, NlpTokenizer nlpTokenizer) {
         this.appConfigProperties = appConfigProperties;
+        this.sparkSession = sparkSession;
         this.sparkContext = sparkContext;
-        this.sqlContext = sqlContext;
         this.nlpTokenizer = nlpTokenizer;
         log.info("Start PostConstruct...");
         tokenizer = new Tokenizer()
@@ -86,14 +78,13 @@ public class FeatureExtractor {
         for (int i = 0, length = names.size(); i < length; i++) {
             segmentNames.add(new String[]{StringUtils.strip(names.get(i)), StringUtils.strip(terms.get(i))});
         }
-        SparkSession sparkSession;
         JavaRDD<Row> textRowRDD = sparkContext.parallelize(segmentNames)
                 .map(RowFactory::create);
         StructType schema = new StructType(new StructField[]{
                 new StructField("origin", DataTypes.StringType, false, Metadata.empty()),
                 new StructField("text", DataTypes.StringType, false, Metadata.empty())
         });
-        Dataset<Row> sentenceDataset = sqlContext.createDataFrame(textRowRDD, schema);
+        Dataset<Row> sentenceDataset = sparkSession.sqlContext().createDataFrame(textRowRDD, schema);
         Dataset<Row> wordsDataset = tokenizer.transform(sentenceDataset);
         Dataset<Row> featurizedDataset = hashingTF.transform(wordsDataset);
         return idfModel.transform(featurizedDataset);
