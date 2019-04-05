@@ -44,14 +44,6 @@ public class AppConfigProperties {
         return String.join(File.separator, modelPath, "bayes");
     }
 
-    /**
-     * 训练数据集
-     *
-     * @return 训练数据文件路径
-     */
-    public String getTrainDataFile() {
-        return String.join(File.separator, dataPath, "train.data");
-    }
 
     /**
      * 商品分词字典

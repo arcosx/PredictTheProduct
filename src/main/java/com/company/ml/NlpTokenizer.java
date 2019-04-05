@@ -23,23 +23,15 @@ public class NlpTokenizer {
     private JiebaSegmenter segmenter;
 
     private AppConfigProperties configProperties;
+    private WordDictionary wordDictionary = WordDictionary.getInstance();
 
     public NlpTokenizer(AppConfigProperties configProperties) {
         this.configProperties = configProperties;
-    }
-
-    private WordDictionary wordDictionary = WordDictionary.getInstance();
-    /**
-     * 分词器初始化，加载用户词典
-     */
-
-    public void init() {
         log.info("Start PostConstruct...");
         log.info(configProperties.getDictFile());
         if (StringUtils.isNotBlank(configProperties.getDictFile())
                 && CategoryUtils.isFileExist(configProperties.getDictFile())) {
             log.info("Start loading product dictionary ...");
-//            WordDictionary.getInstance().loadUserDict(Paths.get(configProperties.getDictFile()));
             wordDictionary.loadUserDict(Paths.get(configProperties.getDictFile()));
             log.info("Finish loading product dictionary");
         }

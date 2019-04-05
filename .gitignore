@@ -1,3 +1,5 @@
 .idea
 target/
 out/
+
+data/Result\.csv

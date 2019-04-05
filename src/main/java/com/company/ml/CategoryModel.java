@@ -53,9 +53,7 @@ public class CategoryModel implements Serializable {
      * 从本地加载加载Model
      */
     public void loadModel() {
-        System.out.println("hehehe");
         featureExtractor.loadModel();
         classification.loadModel();
-        System.out.println("haha");
     }
 }

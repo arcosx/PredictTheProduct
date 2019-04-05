@@ -9,10 +9,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDFModel;
 import org.apache.spark.ml.feature.Tokenizer;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
@@ -41,16 +38,6 @@ public class FeatureExtractor {
         this.sparkContext = sparkContext;
         this.sqlContext = sqlContext;
         this.nlpTokenizer = nlpTokenizer;
-    }
-
-    private Tokenizer tokenizer;
-
-    private HashingTF hashingTF;
-
-    private IDFModel idfModel;
-
-
-    public void init() {
         log.info("Start PostConstruct...");
         tokenizer = new Tokenizer()
                 .setInputCol("text")
@@ -61,6 +48,13 @@ public class FeatureExtractor {
                 .setNumFeatures(appConfigProperties.getNumFeatures());
         loadModel();
     }
+
+    private Tokenizer tokenizer;
+
+    private HashingTF hashingTF;
+
+    private IDFModel idfModel;
+
 
     /**
      * 从本地加载训练好的tf-idf模型
@@ -92,14 +86,13 @@ public class FeatureExtractor {
         for (int i = 0, length = names.size(); i < length; i++) {
             segmentNames.add(new String[]{StringUtils.strip(names.get(i)), StringUtils.strip(terms.get(i))});
         }
-
+        SparkSession sparkSession;
         JavaRDD<Row> textRowRDD = sparkContext.parallelize(segmentNames)
                 .map(RowFactory::create);
         StructType schema = new StructType(new StructField[]{
                 new StructField("origin", DataTypes.StringType, false, Metadata.empty()),
                 new StructField("text", DataTypes.StringType, false, Metadata.empty())
         });
-
         Dataset<Row> sentenceDataset = sqlContext.createDataFrame(textRowRDD, schema);
         Dataset<Row> wordsDataset = tokenizer.transform(sentenceDataset);
         Dataset<Row> featurizedDataset = hashingTF.transform(wordsDataset);

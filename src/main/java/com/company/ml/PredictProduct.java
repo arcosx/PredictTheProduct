@@ -12,6 +12,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,8 +23,6 @@ import java.util.stream.Collectors;
 
 public class PredictProduct {
 
-    private AppConfigProperties appConfigProperties;
-    private SparkConfigProperties sparkConfigProperties;
     private Map<Integer, StandardCategory> standardCategoryVoMap = new HashMap<>();
     private final TypeReference<List<StandardCategory>> categoryVoTypeReference = new TypeReference<List<StandardCategory>>() {
     };
@@ -31,8 +30,6 @@ public class PredictProduct {
     private CategoryModel categoryModel;
 
     public  PredictProduct(AppConfigProperties appConfigProperties, SparkConfigProperties sparkConfigProperties){
-        this.appConfigProperties = appConfigProperties;
-        this.sparkConfigProperties = sparkConfigProperties;
         try (InputStream is = Main.class.getResourceAsStream("/category.json")) {
             String jsonString = IOUtils.toString(is);
             List<StandardCategory> voList = CategoryUtils.fromJson(jsonString, this.categoryVoTypeReference);
@@ -44,6 +41,7 @@ public class PredictProduct {
         } catch (IOException e) {
             System.out.println("Cannot load category json file");
         }
+
         SparkConf sparkConf = new SparkConf();
         sparkConf.setAppName(sparkConfigProperties.getAppName());
         sparkConf.setMaster(sparkConfigProperties.getMasterUrl());
@@ -55,21 +53,18 @@ public class PredictProduct {
         JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
         SQLContext sqlContext = new SQLContext(javaSparkContext);
         NlpTokenizer nlpTokenizer = new NlpTokenizer(appConfigProperties);
-        nlpTokenizer.init();
         BayesClassification bayesClassification = new BayesClassification(appConfigProperties);
         FeatureExtractor featureExtractor = new FeatureExtractor(appConfigProperties, javaSparkContext, sqlContext, nlpTokenizer);
-        featureExtractor.init();
         this.categoryModel = new CategoryModel(featureExtractor, bayesClassification);
         this.categoryModel.loadModel();
     }
     public List<ProductCategory> predict(List<String> productNames){
         List<ProductCategory> temp = categoryModel.predict(productNames);
-        List<ProductCategory> res = temp.stream()
+        return temp.stream()
                 .peek(categoryVo -> {
                     StandardCategory standardVo = standardCategoryVoMap.get(categoryVo.getThirdCateId());
                     categoryVo.copyCategory(standardVo);
                 })
                 .collect(Collectors.toList());
-        return res;
     }
 }
