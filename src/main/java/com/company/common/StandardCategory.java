@@ -35,4 +35,28 @@ public class StandardCategory implements Serializable {
      * 一级分类名称
      */
     private String firstCate;
+
+    public int getThirdCateId() {
+        return thirdCateId;
+    }
+
+    public String getThirdCate() {
+        return thirdCate;
+    }
+
+    public int getSecondCateId() {
+        return secondCateId;
+    }
+
+    public String getSecondCate() {
+        return secondCate;
+    }
+
+    public int getFirstCateId() {
+        return firstCateId;
+    }
+
+    public String getFirstCate() {
+        return firstCate;
+    }
 }

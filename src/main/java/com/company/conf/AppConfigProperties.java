@@ -9,12 +9,12 @@ public class AppConfigProperties {
     /**
      * 数据目录
      */
-    private String dataPath = "/Users/wgb/Code/e-business/product_category/data";
+    private String dataPath = "/Users/wgb/Code/e-business/PredictTheProduct/data";
 
     /**
      * 训练好的模型数据目录
      */
-    private String modelPath = "/Users/wgb/Code/e-business/product_category/model";
+    private String modelPath = "/Users/wgb/Code/e-business/PredictTheProduct/model";
 
     /**
      * 特征向量维度

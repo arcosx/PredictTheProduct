@@ -42,9 +42,9 @@ public class PredictProduct {
                 .builder()
                 .master(appConfigProperties.getMasterUrl())
                 .appName(appConfigProperties.getAppName())
-                .config("spark.cores.max",1)
-                .config("spark.executor.memory","1g")
-                .config("spark.driver.memory","512m")
+                .config("spark.cores.max",2)
+                .config("spark.executor.memory","2g")
+                .config("spark.driver.memory","1g")
                 .config("spark.network.timeout","5000")
                 .getOrCreate();
         JavaSparkContext javaSparkContext = new JavaSparkContext(sparkSession.sparkContext());

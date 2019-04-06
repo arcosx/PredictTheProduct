@@ -8,6 +8,10 @@ import lombok.NoArgsConstructor;
 public class ProductCategory extends StandardCategory {
     private String productName;
 
+    public String getProductName() {
+        return productName;
+    }
+
     public ProductCategory(String productName, double thirdCategoryId) {
         this.productName = productName;
         setThirdCateId((int) thirdCategoryId);
